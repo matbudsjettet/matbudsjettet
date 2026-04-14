@@ -427,10 +427,16 @@ function generatePlan(budget: number, store: Store): DayPlan[] {
       const priciest = selected.reduce((max, d, i) =>
         d.meal.price > selected[max].meal.price ? i : max, 0);
       const cheaperMeal = adjustedMeals
-        .filter(({ idx }: { idx: number }) => !usedIndices.has(idx))
+        .map((m, idx) => ({ ...m, idx }))
+        .filter(({ idx }) => !usedIndices.has(idx))
         .sort((a, b) => a.adjustedPrice - b.adjustedPrice)[0];
       if (!cheaperMeal) break;
-      usedIndices.delete(adjustedMeals.findIndex((m) => m.meal.name === selected[priciest].meal.name));
+      const removeIdx = adjustedMeals.findIndex(
+        (m) => m.meal.name === selected[priciest].meal.name
+      );
+      if (removeIdx !== -1) {
+        usedIndices.delete(removeIdx);
+      }
       usedIndices.add(cheaperMeal.idx);
       total -= selected[priciest].meal.price;
       total += cheaperMeal.adjustedPrice;
@@ -446,7 +452,8 @@ function generatePlan(budget: number, store: Store): DayPlan[] {
     const cheapestIdx = selected.reduce((min, d, i) =>
       d.meal.price < selected[min].meal.price ? i : min, 0);
     const pricierMeal = adjustedMeals
-      .filter(({ idx }: { idx: number }) => !usedIndices.has(idx))
+      .map((m, idx) => ({ ...m, idx }))
+      .filter(({ idx }) => !usedIndices.has(idx))
       .sort((a, b) => Math.abs(a.adjustedPrice - budget / 7) - Math.abs(b.adjustedPrice - budget / 7))[0];
     if (pricierMeal) {
       selected[cheapestIdx] = {
@@ -642,7 +649,7 @@ export default function Matbudsjettet() {
   const ingredientMap = new Map<string, { name: string; count: number; category: ShoppingCategory }>();
   plan.forEach((d) => {
     d.meal.ingredients.forEach(({ name, category }) => {
-      const baseKey = name.split(" ")[0].toLowerCase();
+      const baseKey = name.toLowerCase();
       if (!ingredientMap.has(baseKey)) {
         ingredientMap.set(baseKey, { name, count: 1, category });
       } else {
@@ -1563,148 +1570,4 @@ export default function Matbudsjettet() {
       </div>
     </div>
   );
-}"use client";
-
-import { useState, useEffect, useCallback, useRef } from "react";
-
-// EVERYTHING ABOVE UNCHANGED ...
-
-// ─── FIXED PLAN GENERATION ────────────────────────────────────────────────────
-
-function generatePlan(budget: number, store: Store): DayPlan[] {
-  const multiplier = STORE_MULTIPLIER[store];
-
-  // ✅ FIX 1: ADD idx PROPERLY
-  const adjustedMeals = MEAL_DB.map((meal, idx) => ({
-    meal,
-    adjustedPrice: Math.round(meal.price * multiplier),
-    idx,
-  }));
-
-  const budgetTier =
-    budget <= 500 ? "low" : budget <= 900 ? "mid" : budget <= 1200 ? "high" : "premium";
-
-  const tagSequences: Record<string, Tag[]> = {
-    low: ["billig", "vegetar", "billig", "billig", "vegetar", "billig", "protein"],
-    mid: ["protein", "vegetar", "billig", "protein", "vegetar", "protein", "billig"],
-    high: ["protein", "vegetar", "protein", "premium", "protein", "vegetar", "protein"],
-    premium: ["premium", "protein", "vegetar", "premium", "protein", "premium", "vegetar"],
-  };
-
-  const tagSeq = tagSequences[budgetTier];
-
-  const jitter = () => (Math.random() - 0.5) * 0.15;
-
-  const usedIndices = new Set<number>();
-  const selected: DayPlan[] = [];
-
-  let remainingBudget = budget;
-
-  for (let i = 0; i < 7; i++) {
-    const daysLeft = 7 - i;
-    const targetForThisDay = remainingBudget / daysLeft;
-    const preferredTag = tagSeq[i];
-
-    const candidates = adjustedMeals
-      .filter(({ idx, adjustedPrice }) => {
-        if (usedIndices.has(idx)) return false;
-        const ratio = adjustedPrice / targetForThisDay;
-        return ratio > 0.4 && ratio < 1.7;
-      });
-
-    const scored = candidates.map(({ meal, adjustedPrice, idx }) => {
-      const tagBonus = meal.tag === preferredTag ? 0 : 1;
-      const priceScore = Math.abs(adjustedPrice / targetForThisDay - 1);
-      return { meal, adjustedPrice, idx, score: tagBonus * 0.4 + priceScore + jitter() };
-    });
-
-    scored.sort((a, b) => a.score - b.score);
-
-    let pick = scored[0];
-
-    // fallback
-    if (!pick) {
-      const fallback = adjustedMeals
-        .filter(({ idx }) => !usedIndices.has(idx))
-        .sort((a, b) =>
-          Math.abs(a.adjustedPrice - targetForThisDay) -
-          Math.abs(b.adjustedPrice - targetForThisDay)
-        )[0];
-
-      if (!fallback) break;
-      pick = { ...fallback, score: 0 };
-    }
-
-    usedIndices.add(pick.idx);
-    remainingBudget -= pick.adjustedPrice;
-
-    selected.push({
-      ...DAYS[i],
-      meal: { ...pick.meal, price: pick.adjustedPrice },
-    });
-  }
-
-  let total = selected.reduce((s, d) => s + d.meal.price, 0);
-  const maxTotal = budget * 1.05;
-  const minTotal = budget * 0.88;
-
-  // ✅ FIX 2: CORRECT INDEX HANDLING
-  if (total > maxTotal) {
-    let tries = 0;
-    while (total > maxTotal && tries < 10) {
-      tries++;
-
-      const priciestIdx = selected.reduce((max, d, i) =>
-        d.meal.price > selected[max].meal.price ? i : max, 0
-      );
-
-      const cheaperMeal = adjustedMeals
-        .filter(({ idx }) => !usedIndices.has(idx))
-        .sort((a, b) => a.adjustedPrice - b.adjustedPrice)[0];
-
-      if (!cheaperMeal) break;
-
-      // remove old meal correctly
-      const oldIdx = adjustedMeals.find(
-        (m) => m.meal.name === selected[priciestIdx].meal.name
-      )?.idx;
-
-      if (oldIdx !== undefined) {
-        usedIndices.delete(oldIdx);
-      }
-
-      usedIndices.add(cheaperMeal.idx);
-
-      total -= selected[priciestIdx].meal.price;
-      total += cheaperMeal.adjustedPrice;
-
-      selected[priciestIdx] = {
-        ...selected[priciestIdx],
-        meal: { ...cheaperMeal.meal, price: cheaperMeal.adjustedPrice },
-      };
-    }
-  }
-
-  if (total < minTotal) {
-    const cheapestIdx = selected.reduce((min, d, i) =>
-      d.meal.price < selected[min].meal.price ? i : min, 0
-    );
-
-    const pricierMeal = adjustedMeals
-      .filter(({ idx }) => !usedIndices.has(idx))
-      .sort(
-        (a, b) =>
-          Math.abs(a.adjustedPrice - budget / 7) -
-          Math.abs(b.adjustedPrice - budget / 7)
-      )[0];
-
-    if (pricierMeal) {
-      selected[cheapestIdx] = {
-        ...selected[cheapestIdx],
-        meal: { ...pricierMeal.meal, price: pricierMeal.adjustedPrice },
-      };
-    }
-  }
-
-  return selected;
 }
