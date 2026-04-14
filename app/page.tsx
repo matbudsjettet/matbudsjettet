@@ -371,13 +371,14 @@ function generatePlan(budget: number, store: Store): DayPlan[] {
     const targetForThisDay = remainingBudget / daysLeft;
     const preferredTag = tagSeq[i];
 
-    // Find candidates: prefer matching tag, price within ±40% of daily target
+    // Find candidates: prefer matching tag, price within budget and ±40% of daily target
     const candidates = adjustedMeals
       .map((m, idx) => ({ ...m, idx }))
       .filter(({ idx, adjustedPrice }) => {
         if (usedIndices.has(idx)) return false;
+        if (adjustedPrice > remainingBudget) return false; // hard cap: never exceed remaining budget
         const ratio = adjustedPrice / targetForThisDay;
-        return ratio > 0.4 && ratio < 1.7; // sensible range
+        return ratio > 0.4 && ratio < 1.7;
       });
 
     // Score candidates: reward tag match + price closeness (with jitter for variety)
@@ -396,7 +397,7 @@ function generatePlan(budget: number, store: Store): DayPlan[] {
     if (!pick) {
       const fallback = adjustedMeals
         .map((m, idx) => ({ ...m, idx }))
-        .filter(({ idx }) => !usedIndices.has(idx))
+        .filter(({ idx, adjustedPrice }) => !usedIndices.has(idx) && adjustedPrice <= remainingBudget)
         .sort((a, b) =>
           Math.abs(a.adjustedPrice - targetForThisDay) - Math.abs(b.adjustedPrice - targetForThisDay)
         )[0];
@@ -416,7 +417,7 @@ function generatePlan(budget: number, store: Store): DayPlan[] {
   // Final validation pass: if total is > 5% over budget, swap priciest non-locked meal
   // with a cheaper one to bring it within range
   let total = selected.reduce((s, d) => s + d.meal.price, 0);
-  const maxTotal = budget * 1.05;
+  const maxTotal = budget * 1.0;
   const minTotal = budget * 0.88;
 
   if (total > maxTotal) {
@@ -625,6 +626,7 @@ export default function Matbudsjettet() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const NORWEGIAN_AVG = 950;
 
@@ -637,8 +639,12 @@ export default function Matbudsjettet() {
   const animatedPerDay = useAnimatedNumber(perDay);
 
   const regenerate = useCallback(() => {
-    setPlan(generatePlan(budget, store));
-    setCheckedItems(new Set());
+    setIsLoading(true);
+    setTimeout(() => {
+      setPlan(generatePlan(budget, store));
+      setCheckedItems(new Set());
+      setIsLoading(false);
+    }, 420);
   }, [budget, store]);
 
   useEffect(() => {
@@ -1027,6 +1033,28 @@ export default function Matbudsjettet() {
               </button>
             ))}
           </div>
+
+          {/* KIWI hack message */}
+          {store === "KIWI" && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: "8px 12px",
+                borderRadius: 10,
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 12,
+                color: "#15803d",
+                fontWeight: 500,
+              }}
+            >
+              <span>💡</span>
+              <span>KIWI er i snitt 12–20% billigere enn andre norske dagligvarebutikker</span>
+            </div>
+          )}
         </div>
 
         {/* Budget */}
@@ -1554,8 +1582,13 @@ export default function Matbudsjettet() {
           zIndex: 100,
         }}
       >
-        <button className="cta-btn cta-primary" onClick={regenerate}>
-          ↻ Ny plan
+        <button
+          className="cta-btn cta-primary"
+          onClick={regenerate}
+          disabled={isLoading}
+          style={{ opacity: isLoading ? 0.8 : 1, transition: "opacity 0.2s" }}
+        >
+          {isLoading ? "Beregner..." : "↻ Ny plan"}
         </button>
         <button
           className="cta-btn cta-secondary"
