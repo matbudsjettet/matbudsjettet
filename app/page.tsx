@@ -1186,8 +1186,8 @@ onClick={() => setStore(s as Store)}    >
               <span style={{ fontSize: 20, marginLeft: 4, opacity: 0.7 }}>kr</span>
             </div>
             <p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>
-              vs. norsk snitt {NORWEGIAN_AVG} kr/uke
-            </p>
+  vs. norsk snitt {NORWEGIAN_AVG} kr per person ({NORWEGIAN_AVG * people} kr totalt)
+</p>
           </div>
 
           {/* Total */}
