@@ -2,14 +2,30 @@
 
 import { useState, useEffect } from "react";
 
+const days = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
+
 export default function Home() {
   const [plan, setPlan] = useState<any>(null);
   const [budget, setBudget] = useState(500);
   const [store, setStore] = useState("KIWI");
   const [loading, setLoading] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
 
   const normalWeeklySpend = 900;
+
+  // 🔥 LOAD SAVED PREFS
+  useEffect(() => {
+    const savedBudget = localStorage.getItem("budget");
+    const savedStore = localStorage.getItem("store");
+
+    if (savedBudget) setBudget(Number(savedBudget));
+    if (savedStore) setStore(savedStore);
+  }, []);
+
+  // 🔥 SAVE PREFS
+  useEffect(() => {
+    localStorage.setItem("budget", String(budget));
+    localStorage.setItem("store", store);
+  }, [budget, store]);
 
   useEffect(() => {
     generatePlan();
@@ -23,115 +39,104 @@ export default function Home() {
       const meals = [
         {
           name: "Pasta + kjøttdeig",
-          items: [
-            { name: "Kjøttdeig", price: 69 },
-            { name: "First Price pasta", price: 14 },
-            { name: "Tomatsaus", price: 22 },
-          ],
+          price: 60,
+          items: ["Kjøttdeig", "Pasta", "Tomatsaus"],
         },
         {
           name: "Kylling + ris",
-          items: [
-            { name: "Kyllingfilet", price: 79 },
-            { name: "Ris", price: 24 },
-            { name: "Soyasaus", price: 18 },
-          ],
+          price: 65,
+          items: ["Kylling", "Ris", "Soyasaus"],
         },
         {
           name: "Omelett",
-          items: [
-            { name: "Egg (12pk)", price: 36 },
-            { name: "Norvegia", price: 45 },
-            { name: "Melk", price: 19 },
-          ],
+          price: 45,
+          items: ["Egg", "Ost", "Melk"],
         },
         {
           name: "Taco",
-          items: [
-            { name: "Tacokit", price: 49 },
-            { name: "Kjøttdeig", price: 69 },
-          ],
+          price: 70,
+          items: ["Tacokit", "Kjøttdeig"],
         },
         {
           name: "Pølser + brød",
-          items: [
-            { name: "Pølser", price: 36 },
-            { name: "Brød", price: 27 },
-          ],
+          price: 50,
+          items: ["Pølser", "Brød"],
+        },
+        {
+          name: "Fiskekaker + poteter",
+          price: 65,
+          items: ["Fiskekaker", "Poteter"],
+        },
+        {
+          name: "Grønnsakssuppe",
+          price: 40,
+          items: ["Grønnsaker", "Kraft"],
         },
       ];
 
       const storeMultiplier =
         store === "KIWI" ? 0.9 : store === "REMA 1000" ? 1 : 1.2;
 
-      let selectedMeals: any[] = [];
-      let shopping: any = {};
+      let weekPlan: any[] = [];
       let total = 0;
 
-      for (let meal of meals.sort(() => 0.5 - Math.random())) {
-        let mealTotal =
-          meal.items.reduce(
-            (sum: number, item: any) => sum + item.price,
-            0
-          ) * storeMultiplier;
+      for (let i = 0; i < 7; i++) {
+        const meal = meals[Math.floor(Math.random() * meals.length)];
+        const price = Math.round(meal.price * storeMultiplier);
 
-        if (total + mealTotal <= budget) {
-          selectedMeals.push(meal);
+        weekPlan.push({
+          day: days[i],
+          ...meal,
+          price,
+        });
 
-          meal.items.forEach((item: any) => {
-            if (!shopping[item.name]) {
-              shopping[item.name] = Math.round(
-                item.price * storeMultiplier
-              );
-            }
-          });
-
-          total += mealTotal;
-        }
+        total += price;
       }
 
       setPlan({
-        meals: selectedMeals,
-        shopping,
-        total: Math.round(total),
+        weekPlan,
+        total,
         savings: Math.max(0, normalWeeklySpend - total),
-        cheapestMeal: selectedMeals[0],
       });
 
       setLoading(false);
-    }, 800);
+    }, 600);
   };
 
   const shareResult = () => {
-    const text = `💸 I spent ONLY ${plan.total} kr on food this week 🇳🇴
+    const text = `💸 Jeg brukte kun ${plan.total} kr på mat denne uka 🇳🇴
 
-🔥 Saved ${plan.savings} kr
+🔥 Sparte ${plan.savings} kr
 
-Can you beat me?
+Klarer du slå meg?
 
-👉 matbudsjettet.app`;
+👉 matbudsjettet.vercel.app`;
 
     navigator.clipboard.writeText(text);
-    alert("Copied! Post it 🚀");
+    alert("Kopiert! 🚀");
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center p-6">
-      <h1 className="text-4xl font-bold mb-2">Matbudsjettet</h1>
-      <p className="text-gray-400 mb-4">
-        Hvor billig kan du spise i Norge? 🇳🇴
+    <main className="min-h-screen bg-black text-white p-4 flex flex-col items-center">
+
+      {/* HEADLINE */}
+      <h1 className="text-3xl font-bold text-center mb-2">
+        Matprisene i Norge er galne 🇳🇴
+      </h1>
+      <p className="text-gray-400 text-center mb-6">
+        Vi hjelper deg spise bra for mindre
       </p>
 
-      {/* STORE SELECTOR */}
+      {/* STORE */}
       <div className="flex gap-2 mb-4">
         {["KIWI", "REMA 1000", "MENY"].map((s) => (
           <button
             key={s}
             onClick={() => setStore(s)}
-            className={`px-4 py-2 rounded-full ${
+            className={`px-3 py-1 rounded-full text-sm ${
               store === s
                 ? "bg-white text-black"
-                : "bg-gray-800 text-white"
+                : "bg-gray-800"
             }`}
           >
             {s}
@@ -140,113 +145,76 @@ Can you beat me?
       </div>
 
       {/* BUDGET */}
-      <p className="mb-2">Budsjett: {budget} kr / uke</p>
+      <p className="mb-1 text-sm">Budsjett: {budget} kr</p>
       <input
         type="range"
         min="200"
         max="1000"
         value={budget}
         onChange={(e) => setBudget(Number(e.target.value))}
-        className="w-full max-w-md mb-6"
+        className="w-full max-w-md mb-4"
       />
 
-      {/* GENERATE BUTTON */}
       <button
         onClick={generatePlan}
-        className="bg-white text-black px-6 py-3 rounded-xl mb-6 hover:scale-105 transition"
+        className="bg-white text-black px-5 py-2 rounded-xl mb-6"
       >
-        Generate plan 🔁
+        Ny plan 🔁
       </button>
 
       {/* LOADING */}
       {loading && (
         <p className="text-gray-400 animate-pulse">
-          ⚡ Finner billigste måltider...
+          ⚡ Lager billig plan...
         </p>
       )}
 
       {/* RESULT */}
       {plan && !loading && (
-        <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-md shadow-lg">
+        <div className="w-full max-w-md">
 
-          {/* DAILY HOOK */}
-          <p className="text-green-400 mb-2">
-            🔥 Billigste måltid i dag:
-          </p>
-          <p className="font-bold mb-4">
-            {plan.cheapestMeal?.name}
-          </p>
+          {/* BIG NUMBER */}
+          <div className="text-center mb-4">
+            <p className="text-gray-400 text-sm">
+              Estimert ukeskost
+            </p>
+            <p className="text-4xl font-bold">
+              {plan.total} kr
+            </p>
+            <p className="text-green-400 text-sm">
+              Sparte {plan.savings} kr
+            </p>
+          </div>
 
-          {/* LOSS TRIGGER */}
-          <p className="text-red-400 text-sm mb-4">
-            ⚠️ Du overbetaler ca {plan.savings} kr hver uke
-          </p>
-
-          {/* MEALS */}
-          <h2 className="text-lg font-semibold mb-2">🍽 Måltider</h2>
-          <ul className="mb-4">
-            {plan.meals.map((meal: any, i: number) => (
-              <li key={i}>• {meal.name}</li>
+          {/* WEEK PLAN */}
+          <div className="grid grid-cols-2 gap-3">
+            {plan.weekPlan.map((day: any, i: number) => (
+              <div
+                key={i}
+                className="bg-gray-900 p-3 rounded-xl"
+              >
+                <p className="text-xs text-gray-400">
+                  {day.day}
+                </p>
+                <p className="font-semibold text-sm">
+                  {day.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {day.price} kr
+                </p>
+              </div>
             ))}
-          </ul>
-
-          {/* SHOPPING */}
-          <h2 className="text-lg font-semibold mb-2">🛒 Handleliste</h2>
-          <ul className="mb-4">
-            {Object.entries(plan.shopping).map(([name, price]: any) => (
-              <li key={name}>
-                • {name} — {price} kr
-              </li>
-            ))}
-          </ul>
-
-          {/* TOTAL */}
-          <p className="text-2xl font-bold mb-2">
-            💰 {plan.total} kr / uke
-          </p>
-
-          {/* SAVINGS */}
-          <p className="text-green-400 mb-4">
-            🔥 Sparte {plan.savings} kr denne uka
-          </p>
+          </div>
 
           {/* SHARE */}
           <button
             onClick={shareResult}
-            className="bg-green-500 w-full text-black py-3 rounded-xl hover:scale-105 transition mb-3"
+            className="bg-green-500 w-full mt-4 py-3 rounded-xl text-black"
           >
             Del resultat 🚀
           </button>
-
-          {/* PREMIUM BLOCK */}
-          {!isPremium ? (
-            <div className="bg-yellow-500 text-black p-4 rounded-xl text-sm">
-              🔒 Premium: Se billigste butikk + eksakt handleliste
-              <button
-                onClick={() => setIsPremium(true)}
-                className="bg-black text-white w-full mt-3 py-2 rounded-lg"
-              >
-                Unlock Premium 🔓
-              </button>
-            </div>
-          ) : (
-            <div className="bg-green-600 p-4 rounded-xl text-sm">
-              ✅ Beste butikk denne uka: {store}
-              <p className="mt-2">
-                👉 Gå hit og kjøp eksakt denne handlelisten
-              </p>
-            </div>
-          )}
         </div>
       )}
-
-      {/* STICKY CTA */}
-      <button
-        onClick={generatePlan}
-        className="fixed bottom-6 bg-white text-black px-6 py-3 rounded-full shadow-lg hover:scale-110 transition"
-      >
-        🔁 Ny plan
-      </button>
     </main>
   );
 }
