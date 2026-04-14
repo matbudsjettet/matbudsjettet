@@ -561,7 +561,7 @@ function PremiumModal({ onClose }: { onClose: () => void }) {
           maxWidth: 380,
           width: "100%",
           boxShadow: "0 24px 64px rgba(0,0,0,0.15)",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #d1d5db",
           textAlign: "center",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -720,7 +720,7 @@ export default function Matbudsjettet() {
         .store-btn {
           padding: 8px 20px;
           border-radius: 100px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           background: #fff;
           color: #6b7280;
           font-family: 'DM Sans', sans-serif;
@@ -745,7 +745,7 @@ export default function Matbudsjettet() {
           border-radius: 8px;
           border: none;
           background: transparent;
-          color: #9ca3af;
+          color: #6b7280;
           font-family: 'DM Sans', sans-serif;
           font-size: 13px;
           font-weight: 500;
@@ -757,7 +757,7 @@ export default function Matbudsjettet() {
         .tab-btn.active {
           background: #fff;
           color: #111827;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           font-weight: 600;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
@@ -765,9 +765,9 @@ export default function Matbudsjettet() {
         .preset-btn {
           padding: 6px 14px;
           border-radius: 8px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           background: #fff;
-          color: #9ca3af;
+          color: #6b7280;
           font-family: 'DM Mono', monospace;
           font-size: 12px;
           cursor: pointer;
@@ -784,7 +784,7 @@ export default function Matbudsjettet() {
 
         .day-card {
           border-radius: 16px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           background: #fff;
           padding: 18px;
           transition: all 0.2s ease;
@@ -801,7 +801,7 @@ export default function Matbudsjettet() {
 
         .stat-card {
           border-radius: 16px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           background: #fff;
           padding: 20px 24px;
           flex: 1;
@@ -840,7 +840,7 @@ export default function Matbudsjettet() {
           cursor: pointer;
           transition: all 0.15s ease;
         }
-        .check-item:hover { background: #f9fafb; border-color: #e5e7eb; }
+        .check-item:hover { background: #f9fafb; border-color: #d1d5db; }
 
         .cta-btn {
           padding: 13px 24px;
@@ -862,7 +862,7 @@ export default function Matbudsjettet() {
         .cta-secondary {
           background: #fff;
           color: #6b7280;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
         .cta-secondary:hover { border-color: #d1d5db; color: #374151; }
@@ -903,7 +903,7 @@ export default function Matbudsjettet() {
         .tip-card {
           padding: 14px 18px;
           border-radius: 12px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #d1d5db;
           background: #fff;
           font-size: 14px;
           line-height: 1.5;
@@ -922,7 +922,7 @@ export default function Matbudsjettet() {
           border: 1px dashed #d1d5db;
           background: #f9fafb;
           font-size: 13px;
-          color: #9ca3af;
+          color: #6b7280;
           cursor: pointer;
           transition: all 0.2s ease;
           margin-top: 8px;
@@ -941,7 +941,7 @@ export default function Matbudsjettet() {
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #9ca3af;
+          color: #6b7280;
           border-bottom: 1px solid #f3f4f6;
         }
         .category-header:first-of-type { margin-top: 0; }
@@ -966,7 +966,7 @@ export default function Matbudsjettet() {
       {/* ── Header ── */}
       <div
         style={{
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom: "1px solid #d1d5db",
           padding: "44px 24px 36px",
           maxWidth: 860,
           margin: "0 auto",
@@ -980,18 +980,18 @@ export default function Matbudsjettet() {
               alignItems: "center",
               gap: 7,
               background: "#fff",
-              border: "1px solid #e5e7eb",
+              border: "1px solid #d1d5db",
               borderRadius: "100px",
               padding: "4px 14px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
-            <span style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.06em", fontWeight: 600, textTransform: "uppercase" }}>
+            <span style={{ fontSize: 11, color: "#6b7280", letterSpacing: "0.06em", fontWeight: 600, textTransform: "uppercase" }}>
               Gratis · Beta
             </span>
           </div>
-          <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500 }}>
+          <span style={{ fontSize: 11, color: "#6b7280", fontWeight: 500 }}>
             Basert på gjennomsnittlige norske priser · Oppdatert 2026
           </span>
         </div>
@@ -1018,7 +1018,7 @@ export default function Matbudsjettet() {
 
         {/* Store */}
         <div style={{ marginBottom: 32 }}>
-          <p style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 12 }}>
+          <p style={{ fontSize: 11, color: "#6b7280", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 12 }}>
             Butikk
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1060,7 +1060,7 @@ export default function Matbudsjettet() {
         {/* Budget */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
-            <p style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
+            <p style={{ fontSize: 11, color: "#6b7280", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>
               Ukebudsjett
             </p>
             <span
@@ -1072,7 +1072,7 @@ export default function Matbudsjettet() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {budget} <span style={{ fontSize: 14, color: "#9ca3af" }}>kr</span>
+              {budget} <span style={{ fontSize: 14, color: "#6b7280" }}>kr</span>
             </span>
           </div>
 
@@ -1085,7 +1085,7 @@ export default function Matbudsjettet() {
             onChange={(e) => setBudget(Number(e.target.value))}
             className="slider-track"
             style={{
-              background: `linear-gradient(to right, #111827 0%, #111827 ${sliderPct}%, #e5e7eb ${sliderPct}%, #e5e7eb 100%)`,
+              background: `linear-gradient(to right, #111827 0%, #111827 ${sliderPct}%, #d1d5db ${sliderPct}%, #d1d5db 100%)`,
               marginBottom: 14,
             }}
           />
@@ -1144,14 +1144,14 @@ export default function Matbudsjettet() {
               {savings >= 0 ? "+" : "-"}{animatedSavings}
               <span style={{ fontSize: 20, marginLeft: 4, opacity: 0.7 }}>kr</span>
             </div>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
+            <p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>
               vs. norsk snitt {NORWEGIAN_AVG} kr/uke
             </p>
           </div>
 
           {/* Total */}
           <div className="stat-card">
-            <p style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>
+            <p style={{ fontSize: 11, color: "#6b7280", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>
               Totalt
             </p>
             <div
@@ -1165,14 +1165,14 @@ export default function Matbudsjettet() {
               }}
             >
               {animatedTotal}
-              <span style={{ fontSize: 16, color: "#9ca3af", marginLeft: 4 }}>kr</span>
+              <span style={{ fontSize: 16, color: "#6b7280", marginLeft: 4 }}>kr</span>
             </div>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>denne uken</p>
+            <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>denne uken</p>
           </div>
 
           {/* Per day */}
           <div className="stat-card">
-            <p style={{ fontSize: 11, color: "#9ca3af", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>
+            <p style={{ fontSize: 11, color: "#6b7280", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, marginBottom: 10 }}>
               Per dag
             </p>
             <div
@@ -1186,9 +1186,9 @@ export default function Matbudsjettet() {
               }}
             >
               {animatedPerDay}
-              <span style={{ fontSize: 16, color: "#9ca3af", marginLeft: 4 }}>kr</span>
+              <span style={{ fontSize: 16, color: "#6b7280", marginLeft: 4 }}>kr</span>
             </div>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 8 }}>per middag</p>
+            <p style={{ fontSize: 12, color: "#6b7280", marginTop: 8 }}>per middag</p>
           </div>
         </div>
 
@@ -1201,7 +1201,7 @@ export default function Matbudsjettet() {
             padding: "4px",
             background: "#ececf0",
             borderRadius: 12,
-            border: "1px solid #e5e7eb",
+            border: "1px solid #d1d5db",
             width: "fit-content",
           }}
         >
@@ -1238,14 +1238,14 @@ export default function Matbudsjettet() {
                     hoveredDay === i
                       ? `0 0 0 2px ${storeColor}30, 0 8px 24px rgba(0,0,0,0.10)`
                       : "0 1px 4px rgba(0,0,0,0.05)",
-                  borderColor: hoveredDay === i ? `${storeColor}60` : "#e5e7eb",
+                  borderColor: hoveredDay === i ? `${storeColor}60` : "#d1d5db",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <span
                     style={{
                       fontSize: 11,
-                      color: "#9ca3af",
+                      color: "#6b7280",
                       letterSpacing: "0.08em",
                       fontWeight: 700,
                       textTransform: "uppercase",
@@ -1283,7 +1283,7 @@ export default function Matbudsjettet() {
                   >
                     {dayPlan.meal.price}
                   </span>
-                  <span style={{ fontSize: 12, color: "#9ca3af" }}>kr</span>
+                  <span style={{ fontSize: 12, color: "#6b7280" }}>kr</span>
                 </div>
               </div>
             ))}
@@ -1302,7 +1302,7 @@ export default function Matbudsjettet() {
                 padding: "14px 18px",
                 background: "#fff",
                 borderRadius: 12,
-                border: "1px solid #e5e7eb",
+                border: "1px solid #d1d5db",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
@@ -1310,7 +1310,7 @@ export default function Matbudsjettet() {
                 <p style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>
                   Handleliste klar ✓
                 </p>
-                <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+                <p style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
                   {totalShoppingItems} varer · {checkedCount} lagt i kurven
                 </p>
               </div>
@@ -1321,7 +1321,7 @@ export default function Matbudsjettet() {
                       fontSize: 12,
                       color: "#6b7280",
                       background: "#f3f4f6",
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid #d1d5db",
                       borderRadius: 7,
                       cursor: "pointer",
                       padding: "5px 12px",
@@ -1339,7 +1339,7 @@ export default function Matbudsjettet() {
                     fontWeight: 500,
                     color: "#374151",
                     background: "#f3f4f6",
-                    border: "1px solid #e5e7eb",
+                    border: "1px solid #d1d5db",
                     borderRadius: 8,
                     padding: "4px 10px",
                   }}
@@ -1453,7 +1453,7 @@ export default function Matbudsjettet() {
                           <span
                             style={{
                               fontSize: 14,
-                              color: checked ? "#9ca3af" : "#374151",
+                              color: checked ? "#6b7280" : "#374151",
                               textDecoration: checked ? "line-through" : "none",
                               flex: 1,
                               transition: "all 0.15s ease",
@@ -1467,7 +1467,7 @@ export default function Matbudsjettet() {
                                 fontSize: 11,
                                 color: "#6b7280",
                                 background: "#f3f4f6",
-                                border: "1px solid #e5e7eb",
+                                border: "1px solid #d1d5db",
                                 borderRadius: "100px",
                                 padding: "1px 8px",
                                 fontFamily: "'DM Mono', monospace",
@@ -1511,7 +1511,7 @@ export default function Matbudsjettet() {
               <p
                 style={{
                   fontSize: 11,
-                  color: "#9ca3af",
+                  color: "#6b7280",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   fontWeight: 700,
