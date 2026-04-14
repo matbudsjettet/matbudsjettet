@@ -638,7 +638,7 @@ const [plan, setPlan] = useState<DayPlan[]>(() => {
   const totalCost = plan.reduce((sum, d) => sum + d.meal.price * people, 0);
   const pricePerPerson = Math.round(totalCost / people);
   const avgTotal = NORWEGIAN_AVG * people;
-const savings = avgTotal - totalCost;
+const savings = totalBudget - totalCost;
   const perDay = Math.round(totalCost / 7);
 
   const animatedTotal = useAnimatedNumber(totalCost);
