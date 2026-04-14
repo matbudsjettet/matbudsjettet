@@ -619,6 +619,7 @@ const CATEGORY_EMOJI: Record<ShoppingCategory, string> = {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Matbudsjettet() {
+  const [people, setPeople] = useState(1);
   const [store, setStore] = useState<Store>("REMA 1000");
   const [budget, setBudget] = useState(700);
   const [tab, setTab] = useState<Tab>("ukeplan");
@@ -630,7 +631,7 @@ export default function Matbudsjettet() {
 
   const NORWEGIAN_AVG = 950;
 
-  const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0);
+  const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0) * people;
   const savings = NORWEGIAN_AVG - totalCost;
   const perDay = Math.round(totalCost / 7);
 
@@ -1022,17 +1023,53 @@ export default function Matbudsjettet() {
             Butikk
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {(["KIWI", "REMA 1000", "MENY"] as Store[]).map((s) => (
-              <button
-                key={s}
-                className={`store-btn ${store === s ? "active" : ""}`}
-                style={{ "--store-color": STORE_COLORS[s] } as React.CSSProperties}
-                onClick={() => setStore(s)}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+  {["KIWI", "REMA 1000", "MENY"].map((s) => (
+    <button
+      key={s}
+      className={`store-btn ${store === s ? "active" : ""}`}
+      style={{ ["--store-color"]: STORE_COLORS[s] } as React.CSSProperties}
+      onClick={() => setStore(s)}
+    >
+      {s}
+    </button>
+  ))}
+</div>
+
+{/* 👇👇👇 ADD EVERYTHING BELOW HERE 👇👇👇 */}
+
+<div style={{ 
+  marginTop: 12, 
+  fontSize: 13, 
+  color: "#6b7280",
+  fontWeight: 500 
+}}>
+  👤 Planen er for {people} person{people > 1 ? "er" : ""}
+</div>
+
+<div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+  {[1, 2, 3, 4].map((p) => (
+    <button
+      key={p}
+      onClick={() => setPeople(p)}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 8,
+        border: "1px solid #e5e7eb",
+        background: people === p ? "#111827" : "#fff",
+        color: people === p ? "#fff" : "#374151",
+        cursor: "pointer"
+        transform: people === p ? "scale(1.05)" : "scale(1)",
+        transition: "all 0.15s ease",
+      }}
+    >
+      {p}
+    </button>
+  ))}
+</div>
+
+<p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
+  🍽️ Alle priser er per middag
+</p>
 
           {/* KIWI hack message */}
           {store === "KIWI" && (
