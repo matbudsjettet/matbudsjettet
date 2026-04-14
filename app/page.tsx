@@ -622,6 +622,7 @@ export default function Matbudsjettet() {
   const [people, setPeople] = useState(1);
   const [store, setStore] = useState<Store>("REMA 1000");
   const [budget, setBudget] = useState(700);
+  const totalBudget = budget * people;
   const [tab, setTab] = useState<Tab>("ukeplan");
   const [plan, setPlan] = useState<DayPlan[]>(() => generatePlan(700, "REMA 1000"));
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
@@ -631,7 +632,7 @@ export default function Matbudsjettet() {
 
   const NORWEGIAN_AVG = 950;
 
-  const totalCost = plan.reduce((sum, d) => sum + d.meal.price * people, 0);
+  const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0);
   const pricePerPerson = Math.round(totalCost / people);
   const avgTotal = NORWEGIAN_AVG * people;
 const savings = avgTotal - totalCost;
@@ -644,14 +645,14 @@ const savings = avgTotal - totalCost;
   const regenerate = useCallback(() => {
     setIsLoading(true);
     setTimeout(() => {
-      setPlan(generatePlan(budget, store));
+      setPlan(generatePlan(totalBudget, store));
       setCheckedItems(new Set());
       setIsLoading(false);
     }, 420);
   }, [budget, store]);
 
   useEffect(() => {
-    setPlan(generatePlan(budget, store));
+    setPlan(generatePlan(totalBudget, store));
   }, [budget, store]);
 
   // Shopping list grouped by category
