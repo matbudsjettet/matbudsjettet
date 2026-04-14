@@ -1604,3 +1604,39 @@ export default function Matbudsjettet() {
     </div>
   );
 }
+<div style={{ 
+  maxWidth: 860, 
+  margin: "80px auto 0", 
+  padding: "0 24px",
+  color: "#374151",
+  lineHeight: 1.6
+}}>
+  <h2>Billig ukesmeny på budsjett – spar penger på mat i Norge</h2>
+
+  <p>
+    Med Matbudsjettet kan du enkelt lage en ukesmeny basert på budsjettet ditt. 
+    Velg butikk, sett budsjett og få forslag til middager som holder deg innenfor rammen.
+  </p>
+
+  <p>
+    Denne tjenesten fungerer som en enkel matbudsjett kalkulator hvor du kan planlegge middager 
+    for hele uken og holde deg innenfor budsjettet ditt.
+  </p>
+
+  <h3>Hvordan spare penger på mat i Norge</h3>
+  <ul>
+    <li>Planlegg ukens middager på forhånd</li>
+    <li>Velg rimelige butikker som KIWI eller REMA 1000</li>
+    <li>Kjøp basisvarer som ris, pasta og hermetikk i bulk</li>
+  </ul>
+
+  <h3>Hva er et vanlig matbudsjett?</h3>
+  <p>
+    Gjennomsnittet i Norge ligger rundt 900–1000 kr per uke per person.
+    Med riktig planlegging kan du spare flere hundre kroner hver uke.
+  </p>
+
+  <p>
+    Prøv selv på matbudsjettet.no og se hvor mye du kan spare hver uke.
+  </p>
+</div>
