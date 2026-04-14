@@ -621,10 +621,11 @@ const CATEGORY_EMOJI: Record<ShoppingCategory, string> = {
 export default function Matbudsjettet() {
   const [people, setPeople] = useState(1);
   const [store, setStore] = useState<Store>("REMA 1000");
-  const [budget, setBudget] = useState(700);
+  // total household budget
+const [budget, setBudget] = useState(2000);
   const totalBudget = budget;
   const [tab, setTab] = useState<Tab>("ukeplan");
-  const [plan, setPlan] = useState<DayPlan[]>(() => generatePlan(700, "REMA 1000"));
+  const [plan, setPlan] = useState<DayPlan[]>(() => generatePlan(2000 / people, "REMA 1000")
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -632,7 +633,7 @@ export default function Matbudsjettet() {
 
   const NORWEGIAN_AVG = 950;
 
-  const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0);
+  const totalCost = plan.reduce((sum, d) => sum + d.meal.price * people, 0);
   const pricePerPerson = Math.round(totalCost / people);
   const avgTotal = NORWEGIAN_AVG * people;
 const savings = avgTotal - totalCost;
@@ -645,15 +646,15 @@ const savings = avgTotal - totalCost;
   const regenerate = useCallback(() => {
     setIsLoading(true);
     setTimeout(() => {
-      setPlan(generatePlan(totalBudget, store));
+      setPlan(generatePlan(budget / people, store))
       setCheckedItems(new Set());
       setIsLoading(false);
     }, 420);
  }, [totalBudget, store]);
 
   useEffect(() => {
-    setPlan(generatePlan(totalBudget, store));
-  }, [totalBudget, store]);
+  setPlan(generatePlan(budget / people, store));
+}, [budget, people, store]);
 
   // Shopping list grouped by category
   const ingredientMap = new Map<string, { name: string; count: number; category: ShoppingCategory }>();
