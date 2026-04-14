@@ -3,105 +3,92 @@
 import { useState, useEffect } from "react";
 
 type Meal = {
-  day: string;
   name: string;
   price: number;
+  ingredients: string[];
+  tag: string;
 };
 
 export default function Home() {
-  const [budget, setBudget] = useState(500);
+  const [budget, setBudget] = useState(700);
   const [store, setStore] = useState("KIWI");
-  const [plan, setPlan] = useState<{ meals: Meal[]; total: number; savings: number } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const [activeTab, setActiveTab] = useState("plan");
+  const [meals, setMeals] = useState<any[]>([]);
 
-  const normalWeeklySpend = 900;
+  const normalWeeklySpend = 950;
+
+  const mealDatabase: Meal[] = [
+    { name: "Havregrøt", price: 15, ingredients: ["Havregryn", "Melk"], tag: "Enkel" },
+    { name: "Pasta + saus", price: 30, ingredients: ["Pasta", "Tomatsaus"], tag: "Enkel" },
+    { name: "Pølser + brød", price: 40, ingredients: ["Pølser", "Brød"], tag: "Enkel" },
+    { name: "Omelett", price: 35, ingredients: ["Egg", "Ost"], tag: "Protein" },
+    { name: "Kylling + ris", price: 65, ingredients: ["Kylling", "Ris"], tag: "Protein" },
+    { name: "Taco", price: 75, ingredients: ["Kjøttdeig", "Lefser"], tag: "Favoritt" },
+    { name: "Fiskekaker", price: 70, ingredients: ["Fiskekaker", "Poteter"], tag: "Protein" },
+    { name: "Linsesuppe", price: 40, ingredients: ["Linser", "Grønnsaker"], tag: "Vegetar" },
+    { name: "Laks + ris", price: 95, ingredients: ["Laks", "Ris"], tag: "Premium" },
+    { name: "Biff + poteter", price: 120, ingredients: ["Biff", "Poteter"], tag: "Premium" },
+  ];
+
+  const generatePlan = () => {
+    const days = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
+    const targetPerDay = budget / 7;
+
+    const storeMultiplier =
+      store === "KIWI" ? 0.9 :
+      store === "REMA 1000" ? 1 :
+      1.25;
+
+    const selected = days.map((day) => {
+      const sorted = mealDatabase.sort(
+        (a, b) =>
+          Math.abs(a.price - targetPerDay) -
+          Math.abs(b.price - targetPerDay)
+      );
+
+      const meal = sorted[Math.floor(Math.random() * 3)];
+
+      return {
+        day,
+        ...meal,
+        price: Math.round(meal.price * storeMultiplier),
+      };
+    });
+
+    setMeals(selected);
+  };
 
   useEffect(() => {
     generatePlan();
   }, [budget, store]);
 
-  const generatePlan = () => {
-    setLoading(true);
-    setPlan(null);
+  const total = meals.reduce((sum, m) => sum + m.price, 0);
+  const perDay = Math.round(total / 7);
+  const savings = Math.max(0, normalWeeklySpend - total);
 
-    setTimeout(() => {
-      const days = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
-
-      // 🔥 REALISTIC BASE DATA
-      const mealDatabase = [
-        { name: "Havregrøt", base: 15 },
-        { name: "Pasta + saus", base: 30 },
-        { name: "Pølser + brød", base: 40 },
-        { name: "Omelett", base: 35 },
-        { name: "Kylling + ris", base: 65 },
-        { name: "Taco", base: 75 },
-        { name: "Fiskekaker + poteter", base: 70 },
-        { name: "Laks + ris", base: 95 },
-        { name: "Biff + poteter", base: 120 },
-      ];
-
-      // 🔥 STORE PRICE MULTIPLIER
-      const storeMultiplier =
-        store === "KIWI" ? 0.9 :
-        store === "REMA 1000" ? 1 :
-        1.25; // MENY expensive
-
-      // 🔥 BUDGET TARGET PER MEAL
-      const targetPerMeal = budget / 7;
-
-      const meals: Meal[] = days.map((day) => {
-        // pick meal closest to budget target
-        const sorted = mealDatabase.sort((a, b) =>
-          Math.abs(a.base - targetPerMeal) - Math.abs(b.base - targetPerMeal)
-        );
-
-        const chosen = sorted[Math.floor(Math.random() * 3)];
-
-        const price = Math.round(chosen.base * storeMultiplier);
-
-        return {
-          day,
-          name: chosen.name,
-          price,
-        };
-      });
-
-      const total = meals.reduce((sum, m) => sum + m.price, 0);
-
-      setPlan({
-        meals,
-        total,
-        savings: Math.max(0, normalWeeklySpend - total),
-      });
-
-      setLoading(false);
-    }, 300);
-  };
+  const groceryList = Array.from(
+    new Set(meals.flatMap((m) => m.ingredients))
+  );
 
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-10">
+    <main className="min-h-screen bg-white text-black px-4 py-8 max-w-xl mx-auto">
 
       {/* HEADER */}
-      <h1 className="text-3xl font-bold mb-2 text-center">
+      <h1 className="text-2xl font-bold text-center">
         Matprisene i Norge er galne 🇳🇴
       </h1>
-      <p className="text-gray-400 mb-4">
+      <p className="text-center text-gray-500 mb-6">
         Vi hjelper deg spise bra for mindre
       </p>
 
-      {isPremium && (
-        <div className="text-yellow-400 mb-4">⭐ Premium aktiv</div>
-      )}
-
-      {/* STORE SELECT */}
-      <div className="flex gap-2 mb-4">
+      {/* STORE */}
+      <div className="flex gap-2 justify-center mb-4">
         {["KIWI", "REMA 1000", "MENY"].map((s) => (
           <button
             key={s}
             onClick={() => setStore(s)}
-            className={`px-4 py-2 rounded-full ${
-              store === s ? "bg-white text-black" : "bg-gray-800"
+            className={`px-3 py-1 rounded-full ${
+              store === s ? "bg-black text-white" : "bg-gray-200"
             }`}
           >
             {s}
@@ -109,69 +96,102 @@ export default function Home() {
         ))}
       </div>
 
-      {/* BUDGET */}
-      <p className="mb-2">Budsjett: {budget} kr / uke</p>
+      {/* BUDGET PRESETS */}
+      <div className="flex gap-2 justify-center mb-4">
+        {[400, 700, 1000, 1400].map((b) => (
+          <button
+            key={b}
+            onClick={() => setBudget(b)}
+            className="bg-gray-200 px-3 py-1 rounded"
+          >
+            {b} kr
+          </button>
+        ))}
+      </div>
+
+      {/* SLIDER */}
       <input
         type="range"
         min="200"
         max="1500"
         value={budget}
         onChange={(e) => setBudget(Number(e.target.value))}
-        className="w-72 mb-6"
+        className="w-full mb-4"
       />
 
-      {/* BUTTON */}
-      <button
-        onClick={generatePlan}
-        className="bg-white text-black px-6 py-3 rounded-lg mb-6"
-      >
-        Ny plan 🔄
-      </button>
+      <p className="text-center mb-4">Budsjett: {budget} kr</p>
 
-      {loading && <p>Lager plan...</p>}
+      {/* STATS */}
+      <div className="grid grid-cols-3 text-center mb-6">
+        <div>
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="font-bold">{total} kr</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Per dag</p>
+          <p className="font-bold">{perDay} kr</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Sparer</p>
+          <p className="font-bold text-green-600">{savings} kr</p>
+        </div>
+      </div>
 
-      {plan && (
-        <>
-          {/* TOTAL */}
-          <div className="text-center mb-6">
-            <p className="text-gray-400">Estimert ukeskost</p>
-            <h2 className="text-4xl font-bold">{plan.total} kr</h2>
-
-            <p className="text-green-400 mt-2">
-              Du sparer {plan.savings} kr 🎉
-            </p>
-          </div>
-
-          {/* MEALS */}
-          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-            {plan.meals.map((meal, i) => (
-              <div key={i} className="bg-gray-900 p-4 rounded-xl">
-                <p className="text-gray-400 text-sm">{meal.day}</p>
-                <h3 className="font-semibold">{meal.name}</h3>
-                <p className="text-gray-400 text-sm">{meal.price} kr</p>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* PREMIUM */}
-      {!isPremium && (
-        <div className="mt-8 bg-yellow-500 text-black p-4 rounded-xl text-center">
-          🔒 Premium: billigste butikk + smart handleliste
+      {/* TABS */}
+      <div className="flex justify-center gap-4 mb-6">
+        {[
+          { id: "plan", label: "Ukeplan" },
+          { id: "list", label: "Handleliste" },
+          { id: "tips", label: "Spartips" },
+        ].map((tab) => (
           <button
-            onClick={() => setIsPremium(true)}
-            className="block mt-3 bg-black text-white px-4 py-2 rounded-lg"
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`pb-1 ${
+              activeTab === tab.id
+                ? "border-b-2 border-black"
+                : "text-gray-400"
+            }`}
           >
-            Unlock Premium
+            {tab.label}
           </button>
+        ))}
+      </div>
+
+      {/* PLAN */}
+      {activeTab === "plan" && (
+        <div className="grid grid-cols-2 gap-3">
+          {meals.map((m, i) => (
+            <div key={i} className="border p-3 rounded-lg">
+              <p className="text-sm text-gray-500">{m.day}</p>
+              <p className="font-semibold">{m.name}</p>
+              <p className="text-sm text-gray-500">{m.price} kr</p>
+              <p className="text-xs mt-1">{m.tag}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* SHARE */}
-      <button className="fixed bottom-6 bg-green-500 text-black px-6 py-3 rounded-full">
-        Del resultat 🚀
-      </button>
+      {/* LIST */}
+      {activeTab === "list" && (
+        <ul className="space-y-2">
+          {groceryList.map((item, i) => (
+            <li key={i} className="border p-2 rounded">
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* TIPS */}
+      {activeTab === "tips" && (
+        <div className="space-y-3 text-sm">
+          <p>🛒 Handle på KIWI for lavest pris</p>
+          <p>🥩 Bytt biff med kylling for å spare 30%</p>
+          <p>🥦 Velg vegetar 2x i uka for lavere kost</p>
+          <p>📦 Kjøp First Price varer</p>
+        </div>
+      )}
     </main>
   );
 }
