@@ -1052,16 +1052,17 @@ export default function Matbudsjettet() {
     <button
       key={p}
       onClick={() => setPeople(p)}
-      style={{
-        padding: "6px 10px",
-        borderRadius: 8,
-        border: "1px solid #e5e7eb",
-        background: people === p ? "#111827" : "#fff",
-        color: people === p ? "#fff" : "#374151",
-        cursor: "pointer"
-        transform: people === p ? "scale(1.05)" : "scale(1)",
-        transition: "all 0.15s ease",
-      }}
+   style={{
+  padding: "6px 10px",
+  borderRadius: 8,
+  border: "1px solid #e5e7eb",
+  background: people === p ? "#111827" : "#fff",
+  color: people === p ? "#fff" : "#374151",
+  cursor: "pointer", // ✅ ADD THIS COMMA
+
+  transform: people === p ? "scale(1.05)" : "scale(1)",
+  transition: "all 0.15s ease",
+}}
     >
       {p}
     </button>
