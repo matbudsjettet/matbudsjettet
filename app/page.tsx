@@ -631,7 +631,7 @@ export default function Matbudsjettet() {
 
   const NORWEGIAN_AVG = 950;
 
-  const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0) 
+  const totalCost = plan.reduce((sum, d) => sum + d.meal.price * people, 0);
   const pricePerPerson = Math.round(totalCost / people);
   const avgTotal = NORWEGIAN_AVG * people;
 const savings = avgTotal - totalCost;
