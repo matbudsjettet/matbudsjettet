@@ -20,51 +20,82 @@ export default function Home() {
     setPlan(null);
 
     setTimeout(() => {
-      const meals = [
-        { day: "Man", name: "Grønnsakssuppe", price: 36 },
-        { day: "Tir", name: "Pølser + brød", price: 45 },
-        { day: "Ons", name: "Taco", price: 63 },
-        { day: "Tor", name: "Grønnsakssuppe", price: 36 },
-        { day: "Fre", name: "Kylling + ris", price: 59 },
-        { day: "Lør", name: "Fiskekaker + poteter", price: 59 },
-        { day: "Søn", name: "Pølser + brød", price: 45 },
-      ];
+      let meals;
+
+      // 🔻 LOW BUDGET
+      if (budget < 400) {
+        meals = [
+          { day: "Man", name: "Havregrøt", price: 15 },
+          { day: "Tir", name: "Pølser + brød", price: 35 },
+          { day: "Ons", name: "Pasta", price: 25 },
+          { day: "Tor", name: "Egg + brød", price: 20 },
+          { day: "Fre", name: "Ris + soyasaus", price: 18 },
+          { day: "Lør", name: "Nudler", price: 15 },
+          { day: "Søn", name: "Pasta", price: 25 },
+        ];
+      }
+
+      // 🔻 MID BUDGET
+      else if (budget < 800) {
+        meals = [
+          { day: "Man", name: "Grønnsakssuppe", price: 36 },
+          { day: "Tir", name: "Pølser + brød", price: 45 },
+          { day: "Ons", name: "Taco", price: 63 },
+          { day: "Tor", name: "Omelett", price: 40 },
+          { day: "Fre", name: "Kylling + ris", price: 59 },
+          { day: "Lør", name: "Fiskekaker + poteter", price: 59 },
+          { day: "Søn", name: "Pasta + kjøttdeig", price: 65 },
+        ];
+      }
+
+      // 🔻 HIGH BUDGET
+      else {
+        meals = [
+          { day: "Man", name: "Laks + ris", price: 95 },
+          { day: "Tir", name: "Biff + poteter", price: 120 },
+          { day: "Ons", name: "Kyllingfilet + grønnsaker", price: 85 },
+          { day: "Tor", name: "Taco (premium)", price: 90 },
+          { day: "Fre", name: "Sushi hjemme", price: 110 },
+          { day: "Lør", name: "Burger + fries", price: 100 },
+          { day: "Søn", name: "Laks igjen", price: 95 },
+        ];
+      }
 
       const total = meals.reduce((sum, m) => sum + m.price, 0);
 
-      setPlan({ meals, total });
-      setLoading(false);
-    }, 500);
-  };
+      setPlan({
+        meals,
+        total,
+        savings: Math.max(0, normalWeeklySpend - total),
+      });
 
-  const overBudget = plan ? plan.total - budget : 0;
-  const savingsVsNormal = plan ? normalWeeklySpend - plan.total : 0;
+      setLoading(false);
+    }, 400);
+  };
 
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-10">
-
+      
       {/* HEADER */}
       <h1 className="text-3xl font-bold mb-2 text-center">
         Matprisene i Norge er galne 🇳🇴
       </h1>
-
-      <p className="text-gray-400 mb-4 text-center">
+      <p className="text-gray-400 mb-4">
         Vi hjelper deg spise bra for mindre
       </p>
 
+      {/* PREMIUM STATUS */}
       {isPremium && (
-        <p className="text-yellow-400 text-sm mb-4">
-          ⭐ Premium aktiv
-        </p>
+        <div className="text-yellow-400 mb-4">⭐ Premium aktiv</div>
       )}
 
-      {/* STORE PICKER */}
-      <div className="flex gap-3 mb-4">
+      {/* STORE SELECTOR */}
+      <div className="flex gap-2 mb-4">
         {["KIWI", "REMA 1000", "MENY"].map((s) => (
           <button
             key={s}
             onClick={() => setStore(s)}
-            className={`px-4 py-2 rounded-full transition ${
+            className={`px-4 py-2 rounded-full ${
               store === s ? "bg-white text-black" : "bg-gray-800"
             }`}
           >
@@ -74,94 +105,72 @@ export default function Home() {
       </div>
 
       {/* BUDGET */}
-      <p className="mb-2">Budsjett: {budget} kr</p>
-
+      <p className="mb-2">Budsjett: {budget} kr / uke</p>
       <input
         type="range"
         min="200"
         max="1500"
         value={budget}
         onChange={(e) => setBudget(Number(e.target.value))}
-        className="w-full max-w-md mb-6"
+        className="w-72 mb-6"
       />
 
-      {/* GENERATE */}
+      {/* BUTTON */}
       <button
         onClick={generatePlan}
-        className="bg-white text-black px-6 py-3 rounded-lg mb-6 hover:scale-105 transition"
+        className="bg-white text-black px-6 py-3 rounded-lg mb-6"
       >
-        {loading ? "Lager plan..." : "Ny plan 🔄"}
+        Ny plan 🔄
       </button>
 
       {/* RESULT */}
-      {plan && (
-        <div className="w-full max-w-md">
+      {loading && <p>Lager plan...</p>}
 
+      {plan && (
+        <>
           {/* TOTAL */}
           <div className="text-center mb-6">
             <p className="text-gray-400">Estimert ukeskost</p>
-
             <h2 className="text-4xl font-bold">{plan.total} kr</h2>
 
-            {/* BUDGET STATUS */}
-            {plan.total <= budget ? (
-              <p className="text-green-400 mt-2">
-                Du sparer {budget - plan.total} kr 🎉
-              </p>
-            ) : (
-              <p className="text-red-400 mt-2">
-                Du er {overBudget} kr over budsjett ⚠️
-              </p>
-            )}
-
-            {/* VS NORMAL */}
-            <p className="text-gray-500 text-sm mt-1">
-              {savingsVsNormal > 0
-                ? `Sparer ${savingsVsNormal} kr vs gjennomsnitt`
-                : `Bruker ${Math.abs(savingsVsNormal)} kr mer enn snitt`}
+            <p className="text-green-400 mt-2">
+              Du sparer {plan.savings} kr 🎉
             </p>
           </div>
 
-          {/* MEAL CARDS */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* MEAL GRID */}
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md">
             {plan.meals.map((meal: any, i: number) => (
-              <div key={i} className="bg-gray-900 p-4 rounded-xl">
+              <div
+                key={i}
+                className="bg-gray-900 p-4 rounded-xl shadow"
+              >
                 <p className="text-gray-400 text-sm">{meal.day}</p>
-                <p className="font-semibold">{meal.name}</p>
-                <p className="text-gray-300 text-sm">{meal.price} kr</p>
+                <h3 className="font-semibold">{meal.name}</h3>
+                <p className="text-gray-400 text-sm">{meal.price} kr</p>
               </div>
             ))}
           </div>
+        </>
+      )}
 
-          {/* PREMIUM */}
-          <div className="mt-6">
-            {!isPremium ? (
-              <div className="bg-yellow-400 text-black p-4 rounded-xl text-sm">
-                🔒 Premium: Se billigste butikk + smartere handleliste
-                <button
-                  onClick={() => setIsPremium(true)}
-                  className="mt-3 w-full bg-black text-white py-2 rounded-lg"
-                >
-                  Unlock Premium 🚀
-                </button>
-              </div>
-            ) : (
-              <div className="bg-green-600 p-4 rounded-xl text-sm">
-                ✅ Beste butikk denne uka: <b>{store}</b>
-                <p className="mt-1 text-green-100">
-                  Basert på prisene for denne planen
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* SHARE */}
-          <button className="mt-6 w-full bg-green-500 text-black py-3 rounded-lg font-semibold hover:scale-105 transition">
-            Del resultat 🚀
+      {/* PREMIUM BLOCK */}
+      {!isPremium && (
+        <div className="mt-8 bg-yellow-500 text-black p-4 rounded-xl text-center">
+          🔒 Premium: Få billigste butikk + eksakt handleliste
+          <button
+            onClick={() => setIsPremium(true)}
+            className="block mt-3 bg-black text-white px-4 py-2 rounded-lg"
+          >
+            Unlock Premium
           </button>
-
         </div>
       )}
+
+      {/* SHARE CTA */}
+      <button className="fixed bottom-6 bg-green-500 text-black px-6 py-3 rounded-full">
+        Del resultat 🚀
+      </button>
     </main>
   );
 }
