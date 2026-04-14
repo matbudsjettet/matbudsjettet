@@ -622,7 +622,7 @@ export default function Matbudsjettet() {
   const [people, setPeople] = useState(1);
   const [store, setStore] = useState<Store>("REMA 1000");
   const [budget, setBudget] = useState(700);
-  const totalBudget = budget * people;
+  const totalBudget = budget;
   const [tab, setTab] = useState<Tab>("ukeplan");
   const [plan, setPlan] = useState<DayPlan[]>(() => generatePlan(700, "REMA 1000"));
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
@@ -649,11 +649,11 @@ const savings = avgTotal - totalCost;
       setCheckedItems(new Set());
       setIsLoading(false);
     }, 420);
-  }, [budget, store]);
+ }, [totalBudget, store]);
 
   useEffect(() => {
     setPlan(generatePlan(totalBudget, store));
-  }, [budget, store]);
+  }, [totalBudget, store]);
 
   // Shopping list grouped by category
   const ingredientMap = new Map<string, { name: string; count: number; category: ShoppingCategory }>();
