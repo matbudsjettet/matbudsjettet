@@ -1028,7 +1028,7 @@ export default function Matbudsjettet() {
     <button
       key={s}
       className={`store-btn ${store === s ? "active" : ""}`}
-      style={{ ["--store-color"]: STORE_COLORS[s] } as React.CSSProperties}
+     style={{ "--store-color": STORE_COLORS[s as Store] } as React.CSSProperties}
       onClick={() => setStore(s)}
     >
       {s}
