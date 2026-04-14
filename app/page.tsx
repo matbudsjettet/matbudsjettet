@@ -625,7 +625,9 @@ export default function Matbudsjettet() {
 const [budget, setBudget] = useState(2000);
   const totalBudget = budget;
   const [tab, setTab] = useState<Tab>("ukeplan");
-  const [plan, setPlan] = useState<DayPlan[]>(() => generatePlan(2000 / people, "REMA 1000");
+const [plan, setPlan] = useState<DayPlan[]>(() => {
+  return generatePlan(totalBudget, store);
+});
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
