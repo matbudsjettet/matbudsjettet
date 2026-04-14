@@ -632,6 +632,7 @@ export default function Matbudsjettet() {
   const NORWEGIAN_AVG = 950;
 
   const totalCost = plan.reduce((sum, d) => sum + d.meal.price, 0) * people;
+  const pricePerPerson = Math.round(totalCost / people);
   const savings = NORWEGIAN_AVG - totalCost;
   const perDay = Math.round(totalCost / 7);
 
@@ -1069,6 +1070,9 @@ export default function Matbudsjettet() {
 
 <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
   🍽️ Alle priser er per middag
+</p>
+<p style={{ fontSize: 14, color: "#6b7280" }}>
+  💰 {pricePerPerson} kr per person / uke
 </p>
 
           {/* KIWI hack message */}
