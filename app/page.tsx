@@ -1,13 +1,13 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useState } from "react";
 import { buildAll, formatKr, type Config, type MealPlan, type ShoppingList, type SavingsTip, type PlannedMeal } from "./logic";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
 const initialConfig: Config = { store: "REMA1000", householdSize: 2, weeklyBudget: 1000 };
 
-type Tab = "ukeplan" | "handleliste" | "spartips";
+type Tab = "home" | "detail";
 
 interface State {
   config: Config;
@@ -15,15 +15,16 @@ interface State {
   shoppingList: ShoppingList;
   savingsTips: SavingsTip[];
   activeTab: Tab;
+  selectedMeal: PlannedMeal | null;
 }
 
 type Action =
   | { type: "SET_STORE"; store: string }
   | { type: "SET_HOUSEHOLD"; size: number }
   | { type: "SET_BUDGET"; amount: number }
-  | { type: "TOGGLE_ITEM"; itemId: string }
   | { type: "SET_TAB"; tab: Tab }
-  | { type: "SET_ALL"; data: Omit<State, "config" | "activeTab"> };
+  | { type: "SELECT_MEAL"; meal: PlannedMeal | null }
+  | { type: "SET_ALL"; data: Omit<State, "config" | "activeTab" | "selectedMeal"> };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -35,463 +36,225 @@ function reducer(state: State, action: Action): State {
       return { ...state, config: { ...state.config, householdSize: action.size } };
     case "SET_BUDGET":
       return { ...state, config: { ...state.config, weeklyBudget: action.amount } };
-    case "TOGGLE_ITEM": {
-      const groups = state.shoppingList.groups.map((g) => ({
-        ...g,
-        items: g.items.map((item) =>
-          item.id === action.itemId ? { ...item, checked: !item.checked } : item
-        ),
-      }));
-      const allItems = groups.flatMap((g) => g.items);
-      return {
-        ...state,
-        shoppingList: {
-          groups,
-          totalItems: allItems.length,
-          checkedItems: allItems.filter((i) => i.checked).length,
-        },
-      };
-    }
     case "SET_TAB":
       return { ...state, activeTab: action.tab };
+    case "SELECT_MEAL":
+      return { ...state, selectedMeal: action.meal, activeTab: action.meal ? "detail" : "home" };
     default:
       return state;
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── 2030 UI Components ───────────────────────────────────────────────────────
 
-const CATEGORY_COLORS: Record<string, string> = {
-  kjøtt: "bg-red-100 text-red-700",
-  fisk: "bg-blue-100 text-blue-700",
-  vegetar: "bg-green-100 text-green-700",
-  fjærkre: "bg-amber-100 text-amber-700",
+const IMAGES: Record<string, string> = {
+  kjøtt: "https://images.unsplash.com/photo-1600891964092-4316c288032e?auto=format&fit=crop&q=80&w=800",
+  fisk: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=800",
+  vegetar: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800",
+  fjærkre: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=800",
 };
 
-const CATEGORY_ACCENT: Record<string, string> = {
-  kjøtt: "bg-red-400",
-  fisk: "bg-blue-400",
-  vegetar: "bg-green-500",
-  fjærkre: "bg-amber-400",
-};
-
-const TIP_ICONS: Record<string, string> = {
-  "bytte-butikk": "🏪",
-  "bytte-rett": "🔄",
-  bulk: "📦",
-  sesong: "🌿",
-};
-
-function difficultyDots(d: string) {
-  const n = d === "enkel" ? 1 : d === "middels" ? 2 : 3;
+function MealCanvas3D({ mealName, category }: { mealName: string; category: string }) {
+  const imgUrl = IMAGES[category] || IMAGES["vegetar"];
+  
   return (
-    <span className="flex items-center gap-1" aria-label={`Vanskelighetsgrad: ${d}`}>
-      {[1, 2, 3].map((i) => (
-        <span
-          key={i}
-          className={`w-1.5 h-1.5 rounded-full ${i <= n ? "bg-stone-500" : "bg-stone-200"}`}
+    <div className="relative w-full h-full flex items-center justify-center perspective-[2000px]">
+      <div className="relative w-72 h-72 sm:w-96 sm:h-96 animate-float transition-transform duration-1000 ease-out hover:rotate-y-12 hover:-rotate-x-12 cursor-grab active:cursor-grabbing">
+        {/* Deep drop shadow simulating 3D presence */}
+        <div className="absolute inset-0 bg-black blur-3xl translate-y-16 scale-90 opacity-80" />
+        {/* Rendered Food Image (Acting as 2.5D Model) */}
+        <img 
+          src={imgUrl} 
+          alt={mealName} 
+          className="relative w-full h-full object-cover rounded-full shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/10"
+          style={{ filter: "contrast(1.1) saturate(1.2)" }} 
         />
-      ))}
-    </span>
+        {/* Gloss overlay */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-50 mix-blend-overlay pointer-events-none" />
+      </div>
+    </div>
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Tag({ label }: { label: string }) {
-  const isPremium = label === "Premium";
-  const isBudget = label === "Budsjett" || label === "Vegetar";
+function CategoryToken3D({ label, active }: { label: string, active?: boolean }) {
   return (
-    <span
-      className={`text-[11px] font-medium px-2 py-0.5 rounded-full border
-        ${isPremium ? "bg-amber-50 text-amber-600 border-amber-200" : ""}
-        ${isBudget ? "bg-emerald-50 text-emerald-700 border-emerald-200" : ""}
-        ${!isPremium && !isBudget ? "bg-stone-100 text-stone-500 border-stone-200" : ""}
-      `}
+    <div className={`px-6 py-3 rounded-full border backdrop-blur-md whitespace-nowrap transition-all duration-300 cursor-pointer
+      ${active 
+        ? "bg-white/10 border-brand text-brand shadow-[0_0_20px_rgba(212,175,55,0.2)]" 
+        : "bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+      }`}
     >
-      {label}
-    </span>
+      <span className="text-xs tracking-widest uppercase">{label}</span>
+    </div>
   );
 }
 
-function MealCard({ pm }: { pm: PlannedMeal }) {
-  const { meal, finalPrice, dayName } = pm;
-  const accent = CATEGORY_ACCENT[meal.category] ?? "bg-stone-300";
+function GlassMealCard({ pm, onClick }: { pm: PlannedMeal, onClick: () => void }) {
+  const imgUrl = IMAGES[pm.meal.category] || IMAGES["vegetar"];
+
   return (
-    <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden flex flex-col transition-shadow hover:shadow-md">
-      <div className={`h-1 w-full ${accent}`} />
-      <div className="p-4 flex flex-col gap-3">
-        <div className="flex justify-between items-start gap-2">
-          <div>
-            <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1">
-              {dayName}
-            </p>
-            <p className="text-[15px] font-semibold text-stone-800 leading-snug">
-              {meal.name}
-            </p>
-          </div>
-          <p className="text-lg font-bold text-stone-800 tabular-nums whitespace-nowrap">
-            Ca. {formatKr(finalPrice)}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 text-stone-400 text-xs">
-          <span>⏱ {meal.cookTimeMinutes} min</span>
-          {difficultyDots(meal.difficulty)}
-          <span
-            className={`ml-auto text-[11px] font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[meal.category] ?? "bg-stone-100 text-stone-500"}`}
-          >
-            {meal.category}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {meal.tags.map((t) => (
-            <Tag key={t} label={t} />
-          ))}
+    <div 
+      onClick={onClick}
+      className="group relative w-full rounded-[2rem] overflow-hidden glass-panel transition-all duration-500 hover:scale-[1.02] cursor-pointer"
+    >
+      <div className="h-72 w-full relative overflow-hidden">
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background z-10" />
+         <img 
+            src={imgUrl} 
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110 group-hover:rotate-2"
+            alt={pm.meal.name}
+         />
+      </div>
+      <div className="relative z-20 -mt-20 p-6 flex flex-col gap-2">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-white/50">{pm.dayName}</p>
+        <h3 className="text-2xl font-light text-foreground tracking-tight leading-snug">{pm.meal.name}</h3>
+        
+        <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+           <span className="text-xs text-white/40 tracking-wider uppercase">{pm.meal.cookTimeMinutes} min • {pm.meal.difficulty}</span>
+           <span className="text-brand font-medium tracking-wide">{formatKr(pm.finalPrice)}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function SummaryGrid({ plan }: { plan: MealPlan }) {
-  const delta = plan.budgetDelta;
-  const bench = plan.benchmarkDelta;
-  const cards = [
-    {
-      label: "Denne uken",
-      value: formatKr(plan.weeklyTotal),
-      sub: plan.totalSavings > 0 ? `Du sparer ${formatKr(plan.totalSavings)}` : `Totalt: ${formatKr(plan.weeklyTotal)}`,
-      positive: plan.totalSavings > 0 ? true : null,
-    },
-    {
-      label: "Mot budsjett",
-      value:
-        (delta < 0 ? "−" : "+") +
-        formatKr(Math.abs(delta)).replace(" kr", "") +
-        " kr",
-      sub: delta < 0 ? "under budsjett" : "over budsjett",
-      positive: delta < 0,
-    },
-    {
-      label: "Norsk snitt",
-      value: formatKr(Math.abs(bench)),
-      sub: bench < 0 ? "billigere enn snittet" : "dyrere enn snittet",
-      positive: bench < 0,
-    },
-    {
-      label: "Antall middager",
-      value: `${plan.meals.length}`,
-      sub: "denne uken",
-      positive: null,
-    },
-  ];
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          className={`rounded-2xl border p-4 flex flex-col gap-1
-            ${c.positive === true ? "bg-emerald-50 border-emerald-100" : ""}
-            ${c.positive === false ? "bg-red-50 border-red-100" : ""}
-            ${c.positive === null ? "bg-stone-50 border-stone-100" : ""}
-          `}
-        >
-          <p className="text-[11px] font-medium text-stone-400 uppercase tracking-wider">
-            {c.label}
-          </p>
-          <p
-            className={`text-xl font-bold leading-tight tabular-nums
-              ${c.positive === true ? "text-emerald-700" : ""}
-              ${c.positive === false ? "text-red-600" : ""}
-              ${c.positive === null ? "text-stone-800" : ""}
-            `}
-          >
-            {c.value}
-          </p>
-          <p className="text-xs text-stone-400">{c.sub}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
+// ─── Main Screens ─────────────────────────────────────────────────────────────
 
-function ConfigCard({
-  config,
-  dispatch,
-}: {
-  config: Config;
-  dispatch: React.Dispatch<Action>;
-}) {
-  const stores = [
-    { id: "KIWI", label: "KIWI" },
-    { id: "REMA1000", label: "REMA 1000" },
-    { id: "MENY", label: "MENY" },
-  ];
-  const quickBudgets = [700, 1000, 1400, 2000];
+function HomeView({ state, dispatch }: { state: State, dispatch: React.Dispatch<Action> }) {
+  const featuredMeal = state.plan.meals[0];
+  const categories = ["Alle", "Kjøtt", "Fisk", "Vegetar", "Fjærkre"];
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5 flex flex-col gap-5">
-      {/* Store */}
-      <div>
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2.5">
-          🏪 Butikk
-        </p>
-        <div className="flex gap-2">
-          {stores.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => dispatch({ type: "SET_STORE", store: s.id })}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all cursor-pointer
-                ${config.store === s.id
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
-                  : "bg-stone-50 border-stone-200 text-stone-500 hover:border-stone-300"
-                }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Household */}
-      <div>
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2.5">
-          👥 Husstandsstørrelse
-        </p>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4].map((n) => (
-            <button
-              key={n}
-              onClick={() => dispatch({ type: "SET_HOUSEHOLD", size: n })}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all cursor-pointer
-                ${config.householdSize === n
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
-                  : "bg-stone-50 border-stone-200 text-stone-500 hover:border-stone-300"
-                }`}
-            >
-              {n}p
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Budget */}
-      <div>
-        <div className="flex justify-between items-center mb-2.5">
-          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">
-            💰 Ukebudsjett
-          </p>
-          <p className="text-base font-bold text-emerald-700 tabular-nums">
-            {formatKr(config.weeklyBudget)}
-          </p>
-        </div>
-        <input
-          type="range"
-          min={400}
-          max={3000}
-          step={50}
-          value={config.weeklyBudget}
-          onChange={(e) =>
-            dispatch({ type: "SET_BUDGET", amount: parseInt(e.target.value) })
-          }
-          className="w-full accent-emerald-600 h-1.5 rounded-full"
-          aria-label="Ukebudsjett"
-        />
-        <div className="flex gap-2 mt-3">
-          {quickBudgets.map((b) => (
-            <button
-              key={b}
-              onClick={() => dispatch({ type: "SET_BUDGET", amount: b })}
-              className={`flex-1 py-1.5 rounded-lg text-xs border transition-all cursor-pointer
-                ${config.weeklyBudget === b
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 font-semibold"
-                  : "bg-stone-50 border-stone-200 text-stone-400 hover:border-stone-300"
-                }`}
-            >
-              {b} kr
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
-
-function UkeplanTab({ plan }: { plan: MealPlan }) {
-  return (
-    <div className="flex flex-col gap-3 p-4 pb-8">
-      {plan.meals.map((pm) => (
-        <MealCard key={pm.meal.id} pm={pm} />
-      ))}
-    </div>
-  );
-}
-
-function HandlelisterTab({
-  shoppingList,
-  dispatch,
-}: {
-  shoppingList: ShoppingList;
-  dispatch: React.Dispatch<Action>;
-}) {
-  const { groups, totalItems, checkedItems } = shoppingList;
-  const pct = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
-  const allDone = checkedItems === totalItems && totalItems > 0;
-
-  return (
-    <div className="p-4 pb-8 flex flex-col gap-4">
-      {/* Progress */}
-      <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4">
-        <div className="flex justify-between items-center mb-3">
-          <p className="text-sm font-semibold text-stone-700">Handleprogresjon</p>
-          <p className={`text-sm font-semibold ${allDone ? "text-emerald-600" : "text-stone-400"}`}>
-            {allDone ? "✓ Ferdig!" : `${checkedItems} av ${totalItems}`}
-          </p>
-        </div>
-        <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${allDone ? "bg-emerald-500" : "bg-emerald-400"}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        {pct > 0 && !allDone && (
-          <p className="text-xs text-stone-400 mt-1.5 text-right">{pct}%</p>
+    <div className="min-h-screen pb-32">
+      {/* Hero 3D Section */}
+      <section className="relative w-full h-[70vh] flex flex-col items-center justify-center pt-20 overflow-hidden">
+        {/* Cinematic Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand/5 blur-[120px] rounded-full pointer-events-none" />
+        
+        {featuredMeal ? (
+          <>
+            <div className="z-10 mt-10">
+               <MealCanvas3D mealName={featuredMeal.meal.name} category={featuredMeal.meal.category} />
+            </div>
+            <div className="absolute bottom-12 z-20 flex flex-col items-center text-center px-6">
+              <span className="text-brand text-xs tracking-[0.3em] uppercase mb-4">Ukesmenyens Høydepunkt</span>
+              <h1 className="text-4xl sm:text-6xl font-grotesk font-light tracking-tighter text-white mb-2">{featuredMeal.meal.name}</h1>
+              <p className="text-white/40 text-sm tracking-wide">En filmatisk matopplevelse hjemme.</p>
+            </div>
+          </>
+        ) : (
+          <div className="animate-pulse w-64 h-64 bg-white/5 rounded-full" />
         )}
-      </div>
+      </section>
 
-      {/* Groups */}
-      {groups.map((g) => (
-        <div
-          key={g.category}
-          className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden"
-        >
-          <div className="px-4 py-2.5 bg-stone-50 border-b border-stone-100 flex items-center gap-2">
-            <span>{g.emoji}</span>
-            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
-              {g.displayName}
-            </p>
-          </div>
-          {g.items.map((item, idx) => (
-            <button
-              key={item.id}
-              onClick={() => dispatch({ type: "TOGGLE_ITEM", itemId: item.id })}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer
-                ${idx < g.items.length - 1 ? "border-b border-stone-50" : ""}
-                ${item.checked ? "bg-stone-50" : "bg-white hover:bg-stone-50"}
-              `}
-            >
-              {/* Checkbox */}
-              <span
-                className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all
-                  ${item.checked ? "bg-emerald-500 border-emerald-500" : "border-stone-300"}`}
-                aria-hidden="true"
-              >
-                {item.checked && (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path
-                      d="M1.5 5l2.5 2.5 4.5-4.5"
-                      stroke="white"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p
-                  className={`text-sm font-medium transition-colors ${item.checked ? "text-stone-400 line-through" : "text-stone-700"}`}
-                >
-                  {item.name}
-                </p>
-                <p className="text-xs text-stone-400">
-                  {Math.round(item.totalQuantity * 10) / 10} {item.unit}
-                </p>
-              </div>
-              <p className="text-xs text-stone-400 tabular-nums">
-                ~{formatKr(item.estimatedPrice)}
-              </p>
-            </button>
+      {/* Category Strip */}
+      <section className="px-6 sm:px-12 py-8 flex gap-4 overflow-x-auto no-scrollbar border-y border-white/5 mt-10">
+        {categories.map((cat, i) => (
+          <CategoryToken3D key={cat} label={cat} active={i === 0} />
+        ))}
+      </section>
+
+      {/* Feed */}
+      <section className="px-6 sm:px-12 pt-12">
+        <h2 className="text-xs uppercase tracking-[0.3em] text-white/30 mb-8 ml-2">Uken Din</h2>
+        <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
+          {state.plan.meals.map(pm => (
+            <div key={pm.meal.id} className="break-inside-avoid">
+               <GlassMealCard pm={pm} onClick={() => dispatch({ type: "SELECT_MEAL", meal: pm })} />
+            </div>
           ))}
         </div>
-      ))}
-
-      {/* Upsell */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-sm font-semibold text-amber-700 mb-1">
-          ✦ Matbudsjettet Premium
-        </p>
-        <p className="text-sm text-amber-600 leading-relaxed">
-          Få prissammenligning på tvers av butikker, kaloriinnhold og automatisk
-          handleliste til din favorittapp.
-        </p>
-      </div>
+      </section>
     </div>
   );
 }
 
-function SpartipsTab({ savingsTips }: { savingsTips: SavingsTip[] }) {
-  const total = savingsTips.reduce((s, t) => s + t.savingsKr, 0);
+function DetailView({ meal, dispatch }: { meal: PlannedMeal, dispatch: React.Dispatch<Action> }) {
+  const imgUrl = IMAGES[meal.meal.category] || IMAGES["vegetar"];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="p-4 pb-8 flex flex-col gap-3">
-      {/* Total savings banner */}
-      <div className="bg-emerald-600 rounded-2xl p-5 text-white">
-        <p className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-1">
-          Ukens sparepotensial
-        </p>
-        <p className="text-4xl font-bold tabular-nums">{formatKr(total)}</p>
-        <p className="text-sm opacity-75 mt-1">
-          {savingsTips.length} tips tilgjengelig
-        </p>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Image Parallax Blur */}
+      <div className="absolute inset-0 z-0">
+        <img src={imgUrl} className="w-full h-[60vh] object-cover opacity-20" style={{ filter: "blur(60px)" }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/80 to-background" />
       </div>
 
-      {savingsTips.length === 0 && (
-        <p className="text-stone-400 text-sm text-center py-8">
-          Ingen spartips for denne konfigurasjonen.
-        </p>
-      )}
-
-      {savingsTips.map((tip) => (
-        <div
-          key={tip.id}
-          className="bg-white rounded-2xl border border-stone-100 shadow-sm p-4 flex gap-3 items-start"
+      {/* Header */}
+      <div className="relative z-20 p-6 flex justify-between items-center">
+        <button 
+          onClick={() => dispatch({ type: "SELECT_MEAL", meal: null })}
+          className="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-white/70 hover:text-white hover:scale-105 transition-all"
         >
-          <span className="text-2xl leading-none mt-0.5">
-            {TIP_ICONS[tip.type] ?? "💡"}
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-stone-800 mb-1">
-              {tip.title}
-            </p>
-            <p className="text-sm text-stone-500 leading-relaxed">
-              {tip.description}
-            </p>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5 flex-shrink-0">
-            <p className="text-sm font-bold text-emerald-700 tabular-nums whitespace-nowrap">
-              −{formatKr(tip.savingsKr)}
-            </p>
-          </div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+      </div>
+
+      {/* 3D Hero */}
+      <div className="relative z-10 h-[50vh] flex items-center justify-center -mt-10">
+        <MealCanvas3D mealName={meal.meal.name} category={meal.meal.category} />
+      </div>
+
+      {/* Glass Detail Panel */}
+      <div className="relative z-20 glass-panel rounded-t-[3rem] min-h-[50vh] px-8 pt-12 pb-32 border-b-0">
+        <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-10" />
+        
+        <p className="text-brand text-xs tracking-[0.3em] uppercase mb-4">{meal.dayName}</p>
+        <h1 className="text-4xl sm:text-5xl font-grotesk font-light tracking-tighter text-white mb-6 leading-tight">
+          {meal.meal.name}
+        </h1>
+        
+        <div className="flex gap-6 border-y border-white/5 py-6 mb-8">
+           <div className="flex flex-col">
+              <span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Tid</span>
+              <span className="text-lg text-white/90">{meal.meal.cookTimeMinutes} min</span>
+           </div>
+           <div className="w-px bg-white/5" />
+           <div className="flex flex-col">
+              <span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Vanskelighet</span>
+              <span className="text-lg text-white/90 capitalize">{meal.meal.difficulty}</span>
+           </div>
+           <div className="w-px bg-white/5" />
+           <div className="flex flex-col">
+              <span className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Pris</span>
+              <span className="text-lg text-brand">{formatKr(meal.finalPrice)}</span>
+           </div>
         </div>
-      ))}
+
+        <div>
+           <h3 className="text-xs uppercase tracking-[0.3em] text-white/30 mb-6">Ingredienser</h3>
+           <ul className="space-y-4">
+              {meal.meal.ingredients.map(ing => (
+                 <li key={ing.name} className="flex justify-between items-center text-sm">
+                    <span className="text-white/70">{ing.name}</span>
+                    <span className="text-white/40">{ing.quantity} {ing.unit}</span>
+                 </li>
+              ))}
+           </ul>
+        </div>
+      </div>
+
+      {/* Sticky Bottom Action */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 z-30 bg-gradient-to-t from-background via-background/80 to-transparent">
+         <button className="w-full glass-panel !bg-brand/10 !border-brand/30 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all hover:!bg-brand/20 active:scale-[0.98]">
+            <span className="text-brand font-medium tracking-widest uppercase text-sm">Bestill Ingredienser</span>
+         </button>
+      </div>
     </div>
   );
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "ukeplan", label: "Ukeplan" },
-  { id: "handleliste", label: "Handleliste" },
-  { id: "spartips", label: "Spartips" },
-];
-
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, {
     config: initialConfig,
-    activeTab: "ukeplan",
+    activeTab: "home",
+    selectedMeal: null,
     plan: { meals: [], weeklyTotal: 0, staticWeeklyTotal: 0, totalSavings: 0, perDayAverage: 0, budgetDelta: 0, benchmarkDelta: 0, store: initialConfig.store, householdSize: initialConfig.householdSize, weeklyBudget: initialConfig.weeklyBudget },
     shoppingList: { groups: [], totalItems: 0, checkedItems: 0 },
     savingsTips: [],
@@ -501,51 +264,24 @@ export default function Page() {
     buildAll(state.config).then((data) => dispatch({ type: "SET_ALL", data }));
   }, [state.config]);
 
+  // Luxury Top Nav (Glass)
+  const NavBar = () => (
+    <nav className="fixed top-0 w-full z-50 glass-panel !border-x-0 !border-t-0 rounded-none px-6 py-4 flex justify-between items-center">
+      <div className="text-white font-grotesk tracking-tighter text-lg">Matbudsjettet<span className="text-brand">.</span></div>
+      <div className="flex gap-4">
+         <div className="text-xs tracking-widest text-white/40 uppercase">{formatKr(state.config.weeklyBudget)}</div>
+      </div>
+    </nav>
+  );
+
   return (
-    <div className="min-h-screen bg-stone-50 font-sans">
-      {/* Header */}
-      <div className="bg-white border-b border-stone-100 px-4 pt-8 pb-5">
-        <div className="inline-flex items-center bg-amber-50 border border-amber-200 rounded-full px-3 py-1 mb-4">
-          <span className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider">
-            Gratis beta
-          </span>
-        </div>
-        <h1 className="text-2xl font-bold text-stone-900 leading-tight mb-2">
-          Spar penger på<br />ukeshandelen
-        </h1>
-        <p className="text-sm text-stone-400 leading-relaxed mb-5">
-          Planlegg middager, få handleliste og se hva du faktisk sparer.
-        </p>
-        <ConfigCard config={state.config} dispatch={dispatch} />
-        <div className="mt-4">
-          <SummaryGrid plan={state.plan} />
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <div className="sticky top-0 z-10 bg-white border-b border-stone-100 flex">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => dispatch({ type: "SET_TAB", tab: t.id })}
-            className={`flex-1 py-3.5 text-sm font-medium border-b-2 transition-all cursor-pointer
-              ${state.activeTab === t.id
-                ? "border-emerald-500 text-emerald-700"
-                : "border-transparent text-stone-400 hover:text-stone-600"
-              }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab content */}
-      {state.activeTab === "ukeplan" && <UkeplanTab plan={state.plan} />}
-      {state.activeTab === "handleliste" && (
-        <HandlelisterTab shoppingList={state.shoppingList} dispatch={dispatch} />
-      )}
-      {state.activeTab === "spartips" && (
-        <SpartipsTab savingsTips={state.savingsTips} />
+    <div className="bg-background min-h-screen text-foreground selection:bg-brand/30">
+      {state.activeTab === "home" && <NavBar />}
+      
+      {state.activeTab === "home" ? (
+        <HomeView state={state} dispatch={dispatch} />
+      ) : (
+        state.selectedMeal && <DetailView meal={state.selectedMeal} dispatch={dispatch} />
       )}
     </div>
   );
