@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchPrices, type GroceryPriceMap } from "../../../lib/prices/fetchPrices";
+import { getPrices, type GroceryPriceMap } from "../../../lib/prices/getPrices";
 
 let cachedPrices: GroceryPriceMap | null = null;
 let lastFetchTime = 0;
@@ -14,8 +14,8 @@ export async function GET() {
   }
 
   try {
-    console.log("Fetching fresh prices from Firecrawl...");
-    const prices = await fetchPrices();
+    console.log("Fetching fresh prices from Kassal.app API...");
+    const prices = await getPrices();
     
     cachedPrices = prices;
     lastFetchTime = now;

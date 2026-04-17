@@ -18,6 +18,7 @@ export interface Config {
 export interface PlannedMeal {
   meal: (typeof MEALS)[number];
   finalPrice: number;
+  staticPrice: number;
   dayOfWeek: number;
   dayName: string;
 }
@@ -25,6 +26,8 @@ export interface PlannedMeal {
 export interface MealPlan {
   meals: PlannedMeal[];
   weeklyTotal: number;
+  staticWeeklyTotal: number;
+  totalSavings: number;
   perDayAverage: number;
   budgetDelta: number;
   benchmarkDelta: number;
@@ -108,6 +111,7 @@ export async function generateMealPlan(config: Config): Promise<MealPlan> {
     "kjøttdeig": fetchedPrices["kjottdeig"],
     "kyllingfilet": fetchedPrices["kyllingfilet"],
     "ris": fetchedPrices["ris"],
+    "pasta": fetchedPrices["pasta"],
   };
 
   const plannedMeals: PlannedMeal[] = selected.map((meal, i) => {
@@ -120,20 +124,27 @@ export async function generateMealPlan(config: Config): Promise<MealPlan> {
       return { ...ing, pricePerUnit: unitPrice };
     });
 
+    const staticPrice = Math.round(meal.basePricePerPerson * sm * hm);
     const finalPrice = Math.round(realCost * sm * hm);
-    console.log(`Final meal price using real data for ${meal.name}: ${finalPrice} kr`);
+    console.log(`Final meal price using real data for ${meal.name}: ${finalPrice} kr (Static: ${staticPrice} kr)`);
 
     return {
       meal: { ...meal, ingredients },
       finalPrice,
+      staticPrice,
       dayOfWeek: i,
       dayName: DAY_NAMES[i],
     };
   });
   const weeklyTotal = plannedMeals.reduce((s, m) => s + m.finalPrice, 0);
+  const staticWeeklyTotal = plannedMeals.reduce((s, m) => s + m.staticPrice, 0);
+  const totalSavings = staticWeeklyTotal - weeklyTotal;
+
   return {
     meals: plannedMeals,
     weeklyTotal,
+    staticWeeklyTotal,
+    totalSavings,
     perDayAverage: Math.round(weeklyTotal / 7),
     budgetDelta: weeklyTotal - config.weeklyBudget,
     benchmarkDelta:

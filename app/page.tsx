@@ -131,7 +131,7 @@ function MealCard({ pm }: { pm: PlannedMeal }) {
             </p>
           </div>
           <p className="text-lg font-bold text-stone-800 tabular-nums whitespace-nowrap">
-            {formatKr(finalPrice)}
+            Ca. {formatKr(finalPrice)}
           </p>
         </div>
         <div className="flex items-center gap-3 text-stone-400 text-xs">
@@ -158,10 +158,10 @@ function SummaryGrid({ plan }: { plan: MealPlan }) {
   const bench = plan.benchmarkDelta;
   const cards = [
     {
-      label: "Ukestotal",
+      label: "Denne uken",
       value: formatKr(plan.weeklyTotal),
-      sub: `${formatKr(plan.perDayAverage)} per dag`,
-      positive: null,
+      sub: plan.totalSavings > 0 ? `Du sparer ${formatKr(plan.totalSavings)}` : `Totalt: ${formatKr(plan.weeklyTotal)}`,
+      positive: plan.totalSavings > 0 ? true : null,
     },
     {
       label: "Mot budsjett",
@@ -492,7 +492,7 @@ export default function Page() {
   const [state, dispatch] = useReducer(reducer, {
     config: initialConfig,
     activeTab: "ukeplan",
-    plan: { meals: [], weeklyTotal: 0, perDayAverage: 0, budgetDelta: 0, benchmarkDelta: 0, store: initialConfig.store, householdSize: initialConfig.householdSize, weeklyBudget: initialConfig.weeklyBudget },
+    plan: { meals: [], weeklyTotal: 0, staticWeeklyTotal: 0, totalSavings: 0, perDayAverage: 0, budgetDelta: 0, benchmarkDelta: 0, store: initialConfig.store, householdSize: initialConfig.householdSize, weeklyBudget: initialConfig.weeklyBudget },
     shoppingList: { groups: [], totalItems: 0, checkedItems: 0 },
     savingsTips: [],
   });
